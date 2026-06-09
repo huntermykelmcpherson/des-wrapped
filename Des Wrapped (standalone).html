@@ -1,0 +1,952 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Des Wrapped: 28</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@300;400;500&family=Italiana&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --bg: #0c0a08; --ink: #f4ece0; --cream: #efe6d5; --cream-warm: #f4ead7;
+    --paper: #f8f1e2; --paper-deep: #ebdfc6; --char: #1a1612;
+    --burgundy: #5a1622; --burgundy-deep: #3a0d17; --wine: #7a2230;
+    --gold: #c9a55c; --gold-soft: #d4b87a; --gold-pale: #e6d4a8;
+    --serif: "Cormorant Garamond", "Italiana", "Fraunces", Georgia, serif;
+    --serif-alt: "Fraunces", "Cormorant Garamond", Georgia, serif;
+    --sans: "DM Sans", system-ui, -apple-system, sans-serif;
+    --mono: "DM Mono", "JetBrains Mono", ui-monospace, monospace;
+    --grain: 0.55;
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
+    background: var(--bg); color: var(--ink); font-family: var(--sans); }
+  #root { position: fixed; inset: 0; overflow: hidden; }
+
+  /* Film grain overlay */
+  #grain {
+    position: fixed; inset: -10%; pointer-events: none; z-index: 50;
+    opacity: var(--grain); mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.45 0 0 0 0 0.4 0 0 0 0.9 0'/></filter><rect width='200' height='200' filter='url(%23n)' opacity='0.55'/></svg>");
+    background-size: 320px 320px; animation: grain 1.6s steps(6) infinite;
+  }
+  @keyframes grain {
+    0%{transform:translate(0,0)}16%{transform:translate(-3%,-2%)}33%{transform:translate(2%,-4%)}
+    50%{transform:translate(-1%,3%)}66%{transform:translate(4%,1%)}83%{transform:translate(-2%,-1%)}100%{transform:translate(0,0)}
+  }
+
+  @keyframes stamp-in {
+    0% { transform: translate(-50%, -50%) rotate(-18deg) scale(2.5); opacity: 0; }
+    60% { transform: translate(-50%, -50%) rotate(-18deg) scale(0.9); opacity: 0.9; }
+    100% { transform: translate(-50%, -50%) rotate(-18deg) scale(1); opacity: 0.85; }
+  }
+
+  .scene { position: absolute; inset: 0; overflow: hidden; display: flex; flex-direction: column; will-change: opacity, transform; }
+  .full { position: absolute; inset: 0; }
+  img.full { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  /* Progress ticks */
+  .progress {
+    position: fixed; top: calc(var(--sat) + 12px); left: 16px; right: 16px;
+    display: flex; gap: 4px; z-index: 40; pointer-events: none;
+  }
+  .progress .tick { flex: 1; height: 2.5px; background: rgba(244,236,224,0.18); border-radius: 2px; overflow: hidden; }
+  .progress .tick.dark { background: rgba(12,10,8,0.16); }
+  .progress .tick i { display: block; height: 100%; background: currentColor; width: 0%; transition: width 200ms linear; }
+  .progress .tick.done i { width: 100%; }
+
+  /* Tap nav zones */
+  .tap-zone { position: fixed; top: 0; bottom: 0; z-index: 30; }
+  .tap-zone.left { left: 0; width: 30%; }
+  .tap-zone.right { right: 0; width: 70%; cursor: pointer; }
+
+  /* Audio toggle */
+  #audio-toggle {
+    position: fixed; bottom: calc(var(--sab, 0px) + 16px); right: 16px; z-index: 45;
+    width: 36px; height: 36px; border-radius: 50%; border: none;
+    background: rgba(0,0,0,0.35); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    color: #fff; cursor: pointer; display: grid; place-items: center;
+    transition: opacity 300ms, background 300ms;
+    opacity: 0.7;
+  }
+  #audio-toggle:hover { opacity: 1; background: rgba(0,0,0,0.55); }
+
+  /* Gradient helpers */
+  .grad-bottom { position:absolute;inset:0;pointer-events:none;background:linear-gradient(to bottom,transparent 35%,#0a0807cc 75%,#0a0807 100%); }
+  .grad-top { position:absolute;inset:0;pointer-events:none;background:linear-gradient(to bottom,#0a0807dd 0%,transparent 35%); }
+  .vignette { position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 50%,#00000077 100%); }
+
+  /* Typography */
+  .serif { font-family: var(--serif); font-weight: 400; letter-spacing: 0.005em; }
+  .serif-it { font-family: var(--serif); font-weight: 400; font-style: italic; }
+  .display { font-family: var(--serif); font-weight: 400; line-height: 0.92; letter-spacing: -0.015em; }
+  .mono { font-family: var(--mono); }
+  .eyebrow { font-family: var(--sans); text-transform: uppercase; font-size: 11px; letter-spacing: 0.34em; font-weight: 500; opacity: 0.7; }
+  .label { font-family: var(--sans); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; opacity: 0.78; }
+
+  /* Animations */
+  @keyframes fade-up { from { opacity:0; transform: translateY(18px) } to { opacity:1; transform: translateY(0) } }
+  @keyframes fade-in { from { opacity:0 } to { opacity:1 } }
+  @keyframes blur-in { from { filter: blur(8px); opacity:0 } to { filter: blur(0); opacity:1 } }
+  @keyframes ken-burns { from { transform: scale(1.05) translate(-1%,-1%) } to { transform: scale(1.15) translate(1%,1%) } }
+  @keyframes ken-pan-left { from { transform: scale(1.12) translateX(-3%) } to { transform: scale(1.15) translateX(3%) } }
+  @keyframes ken-pan-up { from { transform: scale(1.15) translateY(2%) } to { transform: scale(1.18) translateY(-3%) } }
+  .fade-in { animation: fade-in 800ms ease both; }
+  .fade-up { animation: fade-up 900ms cubic-bezier(.2,.7,.2,1) both; }
+  .blur-in { animation: blur-in 1100ms cubic-bezier(.2,.7,.2,1) both; }
+
+  /* Splash */
+  #splash { display:none; }
+</style>
+</head>
+<body>
+  <div id="splash">
+    <div style="text-align:center;">
+      <div style="font-family:var(--serif);font-size:32px;font-weight:400;letter-spacing:0.04em;">Des Wrapped</div>
+      <div style="font-family:var(--sans);font-size:11px;letter-spacing:0.36em;margin-top:12px;opacity:0.5;">TWENTY &middot; EIGHT</div>
+    </div>
+  </div>
+
+  <div id="root"></div>
+  <div id="grain"></div>
+  <audio id="bgmusic" src="audio.mp3" loop preload="auto"></audio>
+  <button id="audio-toggle" style="display:none;" aria-label="Toggle music">
+    <svg id="audio-icon-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+    </svg>
+    <svg id="audio-icon-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+      <line x1="23" y1="9" x2="17" y2="15"/>
+      <line x1="17" y1="9" x2="23" y2="15"/>
+    </svg>
+  </button>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+
+  <script>
+"use strict";
+
+var e = React.createElement;
+var useState = React.useState, useEffect = React.useEffect, useRef = React.useRef,
+    useCallback = React.useCallback, useMemo = React.useMemo, Fragment = React.Fragment;
+
+/* ============ Photo paths ============ */
+var P = {
+  notlaCouple:  "photos/des_bread.jpeg",
+  babyMom:      "photos/baby-mom.jpeg",
+  kidPortrait:  "photos/des_opinions.jpeg",
+  kidWithMom:   "photos/des_chris.jpeg",
+  kidBackpack:  "photos/des_camera.jpeg",
+  kidGrandmas:  "photos/kid-grandmas.jpeg",
+  nycTrinity:   "photos/des_smoking.jpeg",
+  nycBridge:    "photos/nyc-bridge.jpeg",
+  garageSmoke:  "photos/garage-smoke.jpeg",
+  eloiseCollar: "photos/eloise-collar.jpeg",
+  nycCocktail:  "photos/nyc-cocktail.jpeg",
+  eyesSelfie:   "photos/eyes-selfie.jpeg",
+  nycRooftop:   "photos/nyc-rooftop.jpeg",
+  caboCheers:   "photos/cabo-cheers.jpeg",
+  hawaiiBuggy:  "photos/hawaii-buggy.jpeg",
+  napaCastle:   "photos/napa-castle.jpeg",
+  sfNight:      "photos/sf-night-walk.jpeg",
+  eloiseBasket: "photos/eloise-basket.jpeg",
+  lokiCar:      "photos/loki-car.jpeg",
+  lokiDes:      "photos/loki_des.jpeg",
+  breadBear:    "photos/bread-bear.jpeg",
+  croissantBed: "photos/croissant-bed.jpeg",
+  couchChaos:   "photos/couch-chaos.jpeg",
+  busSelfie:    "photos/bus-selfie.jpeg",
+  hairnets:     "photos/hairnets.jpeg",
+  notlaPortrait:"photos/notla-portrait.jpeg",
+  desHawaii:     "photos/des_hawaii.jpeg",
+  hawaiiTurtle:  "photos/hawaii_des_turtle.jpeg",
+  sfDhalion:     "photos/sf_des_dhalion.jpeg",
+  pismoCouple:   "photos/pismo_des_hunter.jpeg",
+  nycCouple:     "photos/nyc_des_hunter.jpeg",
+  kcGoblin:      "photos/kc_des_hunter_goblin.jpeg",
+  caboDes:       "photos/cabo_des.jpeg",
+  napaCouple:    "photos/napa_des_hunter.jpeg",
+  desGoblin:     "photos/des_goblin.jpeg",
+  desNyc:        "photos/des_nyc.jpeg",
+};
+
+var CASE_IMG = {
+  noirCat:      "cases/noir-cat.webp",
+  martiniCat:   "cases/martini-cat.webp",
+  wineCat:      "cases/wine-cat.webp",
+  bittersCat:   "cases/bitters-cat.webp",
+  absintheCat:  "cases/absinthe-cat.webp",
+  goldfishCat:  "cases/goldfish-cat.webp",
+  matisseCat:   "cases/matisse-cat.webp",
+  sommelierCat: "cases/sommelier-cat.webp",
+  cocktailCat:  "cases/cocktail-cat.webp",
+};
+var IPHONE_HERO = "cases/iphone-17-hero.png";
+
+/* ============ CASES ============ */
+var CASES = [
+  { id: "noir",      name: "The Sophisticate",  img: CASE_IMG.noirCat,      accent: "#2a2440" },
+  { id: "cocktail",  name: "The Party Animal",  img: CASE_IMG.cocktailCat,  accent: "#8b2020" },
+  { id: "matisse",   name: "The Impressionist", img: CASE_IMG.matisseCat,   accent: "#5a3a6b" },
+  { id: "absinthe",  name: "The Bourgeois",     img: CASE_IMG.absintheCat,  accent: "#8a7a30" },
+  { id: "goldfish",  name: "The Art Thief",     img: CASE_IMG.goldfishCat,  accent: "#2a5a4a" },
+  { id: "sommelier", name: "The Sommelier",     img: CASE_IMG.sommelierCat, accent: "#2a5a5a" },
+  { id: "wine",      name: "The Connoisseur",   img: CASE_IMG.wineCat,      accent: "#b8956a" },
+  { id: "bitters",   name: "The Classic",       img: CASE_IMG.bittersCat,   accent: "#3a5a7a" },
+];
+
+var BRACKET = [
+  { round: "quarter-final", matchLabel: "QUARTER · FINAL 1", a: 0, b: 1 },
+  { round: "quarter-final", matchLabel: "QUARTER · FINAL 2", a: 2, b: 3 },
+  { round: "quarter-final", matchLabel: "QUARTER · FINAL 3", a: 4, b: 5 },
+  { round: "quarter-final", matchLabel: "QUARTER · FINAL 4", a: 6, b: 7 },
+  { round: "semi-final",    matchLabel: "SEMI · FINAL 1" },
+  { round: "semi-final",    matchLabel: "SEMI · FINAL 2" },
+  { round: "final",         matchLabel: "THE · FINAL" },
+];
+
+/* ============ CHAPTERS ============ */
+var CHAPTERS = [
+  { id: "cover",   label: "Welcome" },
+  { id: "origin",  label: "Origin" },
+  { id: "wrapped", label: "Wrapped" },
+  { id: "chaos",   label: "Goblin Hour" },
+  { id: "game",    label: "Cat Case Game" },
+  { id: "reveal",  label: "The Reveal" },
+];
+
+/* ============ SHARED COMPONENTS ============ */
+
+function SceneShell(props) {
+  var bg = props.bg || "var(--bg)";
+  var dark = props.dark || false;
+  return e("div", { className: "scene", style: Object.assign({ background: bg, color: dark ? "var(--char)" : "var(--ink)" }, props.style || {}) }, props.children);
+}
+
+function KenBurns(props) {
+  var src = props.src, anim = props.anim || "ken-burns", duration = props.duration || 14000, brightness = props.brightness != null ? props.brightness : 1, blur = props.blur || 0;
+  return e("div", { style: { position: "absolute", inset: 0, overflow: "hidden" } },
+    e("img", { src: src, style: {
+      width: "100%", height: "100%", objectFit: "cover", display: "block",
+      animation: anim + " " + duration + "ms cubic-bezier(.4,.1,.4,1) forwards",
+      filter: "brightness(" + brightness + ")" + (blur ? " blur(" + blur + "px)" : ""),
+    }})
+  );
+}
+
+function SafeContent(props) {
+  return e("div", { className: props.className || "", style: Object.assign({
+    position: "absolute", inset: 0,
+    padding: "calc(var(--sat,0px) + 48px) 28px calc(var(--sab,0px) + 32px)",
+    display: "flex", flexDirection: "column", justifyContent: "center",
+  }, props.style || {}) }, props.children);
+}
+
+/* ============ COVER ============ */
+function Cover() {
+  return e(SceneShell, { bg: "#0c0a08" },
+    e(KenBurns, { src: P.notlaCouple, duration: 18000, brightness: 0.4 }),
+    e("div", { style: { position: "absolute", inset: 0, background: "linear-gradient(180deg, #0c0a0855 0%, #0c0a0844 50%, #0c0a08ee 100%)" } }),
+    e(SafeContent, { style: { justifyContent: "center", alignItems: "center", textAlign: "center" } },
+      e("div", { className: "eyebrow fade-in", style: { color: "var(--gold-soft)", opacity: 0.9, animationDelay: "200ms" } }, "· A CELEBRATION ·"),
+      e("div", { style: { marginTop: 40 } },
+        e("div", { className: "display", style: { fontStyle: "italic", fontSize: "clamp(72px, 18vw, 96px)", color: "var(--paper)", lineHeight: 0.85 } }, "Des"),
+        e("div", { className: "display", style: { fontSize: "clamp(42px, 11vw, 56px)", color: "var(--paper)", letterSpacing: "0.04em", marginTop: 8 } }, "WRAPPED"),
+        e("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginTop: 18 } },
+          e("span", { style: { height: 1, width: 32, background: "var(--gold)" } }),
+          e("span", { className: "mono", style: { fontSize: 13, letterSpacing: "0.4em", color: "var(--gold)" } }, "28"),
+          e("span", { style: { height: 1, width: 32, background: "var(--gold)" } })
+        )
+      ),
+      e("div", { style: { marginTop: 60 } },
+        e("div", { className: "serif-it", style: { fontSize: 16, color: "var(--paper-deep)", opacity: 0.85 } }, "for desiree, on turning twenty-nine"),
+        e("div", { className: "label fade-in", style: { color: "var(--gold-soft)", marginTop: 32, animationDelay: "600ms" } }, "tap to begin")
+      )
+    )
+  );
+}
+
+/* ============ DATE ============ */
+function DateScene() {
+  return e(SceneShell, { bg: "#06050a" },
+    e(SafeContent, { style: { alignItems: "center", textAlign: "center" } },
+      e("div", { className: "eyebrow fade-in", style: { color: "var(--gold-soft)", animationDelay: "300ms" } }, "· somewhere in hanford ·"),
+      e("div", { className: "serif-it", style: { fontSize: "clamp(40px, 12vw, 52px)", marginTop: 28, color: "var(--paper)", animation: "blur-in 1600ms 600ms both" } },
+        "June 10", e("sup", { style: { fontSize: "0.45em", verticalAlign: "super" } }, "th")),
+      e("div", { className: "display", style: { fontSize: "clamp(48px, 15vw, 64px)", fontWeight: 500, marginTop: 4, letterSpacing: "0.04em", color: "var(--paper)", animation: "blur-in 1800ms 1100ms both" } }, "1997.")
+    )
+  );
+}
+
+/* ============ MET ============ */
+function MetScene() {
+  return e(SceneShell, { bg: "#06050a" },
+    e(KenBurns, { src: P.babyMom, brightness: 0.65, duration: 20000 }),
+    e("div", { style: { position: "absolute", inset: 0, background: "linear-gradient(180deg, #06050a99 0%, transparent 35%, #06050aee 100%)" } }),
+    e(SafeContent, { style: { justifyContent: "flex-end", alignItems: "center", textAlign: "center", paddingBottom: "calc(var(--sab,0px) + 80px)" } },
+      e("div", { className: "display fade-up", style: { fontStyle: "italic", fontSize: "clamp(40px, 12vw, 52px)", color: "var(--paper)", animationDelay: "600ms" } }, "the world met"),
+      e("div", { className: "display fade-up", style: { fontSize: "clamp(64px, 20vw, 88px)", fontWeight: 500, color: "var(--paper)", animationDelay: "1400ms", marginTop: 6 } }, "Des.")
+    )
+  );
+}
+
+/* ============ CHILDHOOD CARDS ============ */
+function ChildhoodCard(props) {
+  return e(SceneShell, { bg: "#100c08" },
+    e(KenBurns, { src: props.src, duration: 16000, anim: props.anim || "ken-burns", brightness: 0.85 }),
+    e("div", { style: { position: "absolute", inset: 0, background: "linear-gradient(180deg, #100c0888 0%, transparent 25%, #100c08ee 100%)" } }),
+    e(SafeContent, null,
+      e("div", { style: { marginTop: "auto" } }),
+      e("div", { className: "eyebrow fade-in", style: { color: "var(--gold-soft)", animationDelay: "400ms", position: "absolute", top: "calc(var(--sat,0px) + 48px)", left: 28 } }, props.top),
+      e("div", { style: { marginTop: "auto" } },
+        e("div", { className: "serif-it fade-up", style: { fontSize: "clamp(24px, 7vw, 30px)", color: "var(--paper)", lineHeight: 1.15, animationDelay: "600ms", whiteSpace: "pre-line" } }, props.body),
+        props.year ? e("div", { className: "mono fade-in", style: { marginTop: 16, fontSize: 11, letterSpacing: "0.35em", color: "var(--gold-soft)", opacity: 0.8, animationDelay: "1200ms" } }, props.year) : null
+      )
+    )
+  );
+}
+
+/* ============ YEARS LATER ============ */
+function YearsLater() {
+  return e(SceneShell, { bg: "#06050a" },
+    e(SafeContent, { style: { alignItems: "center", textAlign: "center" } },
+      e("div", { className: "display fade-up", style: { fontStyle: "italic", fontSize: "clamp(42px, 13vw, 56px)", color: "var(--paper)", animationDelay: "400ms" } }, "28 years"),
+      e("div", { className: "display fade-up", style: { fontSize: "clamp(42px, 13vw, 56px)", color: "var(--paper)", animationDelay: "900ms" } }, "later"),
+      e("div", { className: "display fade-up", style: { fontStyle: "italic", fontSize: "clamp(42px, 13vw, 56px)", color: "var(--gold-soft)", animationDelay: "1500ms", marginTop: 4 } }, "...")
+    )
+  );
+}
+
+/* ============ GLAM REVEAL ============ */
+function GlamReveal() {
+  return e(SceneShell, { bg: "#06050a" },
+    e(KenBurns, { src: P.nycTrinity, duration: 18000, brightness: 1.0, anim: "ken-pan-up" }),
+    e("div", { style: { position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 30%, #06050acc 100%)" } }),
+    e(SafeContent, { style: { justifyContent: "flex-end" } },
+      e("div", { className: "eyebrow fade-in", style: { color: "var(--gold-soft)", animationDelay: "500ms" } }, "· the present day ·"),
+      e("div", { className: "display fade-up", style: { fontStyle: "italic", fontSize: "clamp(36px, 10vw, 44px)", color: "var(--paper)", animationDelay: "900ms", marginTop: 14, lineHeight: 1.05 } },
+        "Ohhh,", e("br"), "OKaYyy.")
+    )
+  );
+}
+
+/* ============ WRAPPED TITLE ============ */
+function WrappedTitle() {
+  return e(SceneShell, { bg: "var(--burgundy)" },
+    e("div", { style: { position: "absolute", inset: 0, background: "radial-gradient(ellipse at 30% 20%, #7a223080 0%, transparent 55%), radial-gradient(ellipse at 80% 90%, #c9a55c40 0%, transparent 50%)" } }),
+    e(SafeContent, { style: { alignItems: "center", textAlign: "center" } },
+      e("div", { className: "eyebrow fade-in", style: { color: "var(--gold-soft)" } }, "· year in review ·"),
+      e("div", { className: "display fade-up", style: { fontStyle: "italic", fontSize: "clamp(60px, 18vw, 84px)", color: "var(--paper)", marginTop: 14, animationDelay: "400ms" } }, "Year 28,"),
+      e("div", { className: "display fade-up", style: { fontSize: "clamp(44px, 13vw, 60px)", color: "var(--gold-soft)", marginTop: 4, letterSpacing: "0.02em", animationDelay: "900ms" } }, "in numbers.")
+    )
+  );
+}
+
+/* ============ STAT CARD ============ */
+function StatCard(props) {
+  var bg = props.bg || "var(--burgundy)", fg = props.fg || "var(--paper)", accent = props.accent || "var(--gold-soft)";
+  return e(SceneShell, { bg: bg },
+    props.photo ? e(KenBurns, { src: props.photo, brightness: 0.3, duration: 20000, blur: 2 }) : null,
+    props.photo ? e("div", { style: { position: "absolute", inset: 0, background: bg, opacity: 0.7 } }) : null,
+    e("div", { style: { position: "absolute", inset: 0, background: "radial-gradient(ellipse at 20% 10%, #ffffff10 0%, transparent 50%)" } }),
+    e(SafeContent, { style: { alignItems: "center", textAlign: "center", gap: 0 } },
+      e("div", { className: "eyebrow fade-in", style: { color: accent, marginBottom: 24 } }, props.label),
+      e("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "center", gap: 8 } },
+        e("div", { className: "display fade-up", style: { fontSize: "clamp(100px, 30vw, 168px)", fontWeight: 500, color: fg, lineHeight: 1, letterSpacing: "-0.03em" } }, props.number),
+        props.suffix ? e("div", { className: "serif-it fade-up", style: { fontSize: "clamp(22px, 6vw, 32px)", color: accent, animationDelay: "300ms" } }, props.suffix) : null
+      ),
+      props.sub ? e("div", { className: "serif-it fade-up", style: { fontSize: "clamp(16px, 4.5vw, 20px)", color: fg, marginTop: 24, lineHeight: 1.35, opacity: 0.9, animationDelay: "500ms", maxWidth: 320 } }, props.sub) : null,
+      props.easterEgg ? e("div", { className: "mono fade-in", style: { marginTop: 28, fontSize: 10, letterSpacing: "0.4em", color: accent, opacity: 0.85, animationDelay: "1100ms" } }, props.easterEgg) : null
+    )
+  );
+}
+
+/* ============ CHAPTER INTRO ============ */
+function ChapterIntro(props) {
+  var fg = props.dark ? "var(--char)" : "var(--paper)";
+  var accent = props.accent || "var(--gold-soft)";
+  return e(SceneShell, { bg: props.bg || "#0c0a08" },
+    e(SafeContent, { style: { alignItems: "center", textAlign: "center" } },
+      e("div", { className: "mono fade-in", style: { fontSize: 11, letterSpacing: "0.45em", color: accent } }, "CHAPTER · " + props.chapterNo),
+      e("div", { className: "display fade-up", style: { fontStyle: "italic", fontSize: "clamp(48px, 14vw, 64px)", color: fg, marginTop: 28, lineHeight: 1.0, animationDelay: "400ms" } },
+        props.title.split('\n').map(function(l, i) { return e("div", { key: i }, l); })
+      ),
+      props.sub ? e("div", { className: "serif-it fade-up", style: { fontSize: 18, color: fg, opacity: 0.75, marginTop: 26, animationDelay: "1000ms", lineHeight: 1.35 } }, props.sub) : null,
+      e("div", { style: { marginTop: 32, height: 1, width: 60, background: accent, animation: "fade-in 1200ms 1400ms both" } })
+    )
+  );
+}
+
+/* ============ TRAVEL CARD ============ */
+function TravelCard(props) {
+  var accent = props.accent || "var(--gold-soft)";
+  return e(SceneShell, { bg: "#0c0a08" },
+    e(KenBurns, { src: props.photo, duration: 18000, brightness: 0.9 }),
+    e("div", { style: { position: "absolute", inset: 0, background: "linear-gradient(180deg, #0c0a0877 0%, transparent 35%, #0c0a08f0 100%)" } }),
+    e(SafeContent, null,
+      e("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start" } },
+        e("div", null,
+          e("div", { className: "mono fade-in", style: { fontSize: 10, letterSpacing: "0.4em", color: accent } }, "· LOCATION ·"),
+          e("div", { className: "display fade-up", style: { fontStyle: "italic", fontSize: "clamp(36px, 10vw, 48px)", color: "var(--paper)", marginTop: 6, animationDelay: "400ms", lineHeight: 1, whiteSpace: "pre-line" } }, props.place)
+        ),
+        e("div", { className: "mono fade-in", style: { fontSize: 11, letterSpacing: "0.2em", color: "var(--paper)", opacity: 0.7, animationDelay: "200ms", marginTop: 4, flexShrink: 0 } }, props.month)
+      ),
+      e("div", { style: { flex: 1 } }),
+      props.caption ? e("div", { className: "serif-it fade-up", style: { fontSize: "clamp(18px, 5vw, 24px)", color: "var(--paper)", animationDelay: "900ms", lineHeight: 1.3 } }, props.caption) : null
+    )
+  );
+}
+
+/* ============ EDITORIAL SPREAD ============ */
+function EditorialSpread(props) {
+  var dark = props.dark !== false;
+  var bg = props.bg || "#efe6d5";
+  var fg = dark ? "var(--char)" : "var(--paper)";
+  var accent = dark ? "var(--burgundy)" : "var(--gold-soft)";
+  return e(SceneShell, { bg: bg, dark: dark },
+    e(SafeContent, { style: { gap: 0 } },
+      e("div", { className: "mono fade-in", style: { fontSize: 10, letterSpacing: "0.4em", color: accent } }, props.kicker),
+      e("div", { className: "display fade-up", style: { fontSize: "clamp(34px, 10vw, 44px)", fontWeight: 500, color: fg, lineHeight: 1.0, marginTop: 14, animationDelay: "200ms" } },
+        props.headline.split('\n').map(function(l, i) { return e("div", { key: i }, l); })
+      ),
+      e("div", { style: { margin: "24px auto", width: "min(75vw, 280px)", aspectRatio: "4/3" } },
+        e("div", { style: { width: "100%", height: "100%", background: "var(--paper)", padding: "10px 10px 32px", boxShadow: "0 20px 40px -12px #00000044", transform: "rotate(-1.5deg)", animation: "fade-in 900ms 500ms both" } },
+          e("img", { src: props.photo, style: { width: "100%", height: "100%", objectFit: "cover", display: "block" } })
+        )
+      ),
+      props.body ? e("div", { className: "serif-it fade-up", style: { fontSize: "clamp(14px, 4vw, 17px)", color: fg, lineHeight: 1.35, opacity: 0.9, animationDelay: "900ms" } }, props.body) : null,
+      props.signoff ? e("div", { className: "mono fade-in", style: { fontSize: 10, letterSpacing: "0.4em", color: accent, marginTop: 18, animationDelay: "1300ms", opacity: 0.85 } }, props.signoff) : null
+    )
+  );
+}
+
+/* ============ FULL BLEED PHOTO ============ */
+function FullBleedPhoto(props) {
+  return e(SceneShell, { bg: props.bg || "#0c0a08" },
+    e(KenBurns, { src: props.photo, duration: 16000, anim: props.anim || "ken-burns", brightness: 0.9 }),
+    e("div", { style: { position: "absolute", inset: 0, background: "linear-gradient(180deg, #0c0a0866 0%, transparent 30%, #0c0a08ee 100%)" } }),
+    e(SafeContent, { style: { justifyContent: "flex-end" } },
+      props.top ? e("div", { className: "eyebrow fade-in", style: { color: "var(--gold-soft)", position: "absolute", top: "calc(var(--sat,0px) + 48px)", left: 28 } }, props.top) : null,
+      e("div", { className: "display fade-up", style: { fontStyle: "italic", fontSize: "clamp(30px, 8.5vw, 40px)", color: "var(--paper)", lineHeight: 1.1, animationDelay: "400ms", whiteSpace: "pre-line" } }, props.headline),
+      props.signoff ? e("div", { className: "mono fade-in", style: { fontSize: 10, letterSpacing: "0.4em", color: "var(--gold-soft)", marginTop: 16, animationDelay: "1100ms" } }, props.signoff) : null
+    )
+  );
+}
+
+/* ============ PROBLEM / WARS / REVEAL BUILD ============ */
+function ProblemScene() {
+  return e(SceneShell, { bg: "#06050a" },
+    e(SafeContent, { style: { alignItems: "center", textAlign: "center" } },
+      e("div", { className: "serif-it", style: { fontSize: "clamp(28px, 8vw, 36px)", color: "var(--paper)", animation: "blur-in 1400ms both", lineHeight: 1.25 } },
+        "but there was", e("br"), "just one problem...")
+    )
+  );
+}
+
+function WarsScene() {
+  return e(SceneShell, { bg: "#06050a" },
+    e("div", { style: { position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 50%, #1a1612 0%, #06050a 70%)" } }),
+    e(SafeContent, { style: { alignItems: "center", textAlign: "center" } },
+      e("div", { className: "display fade-up", style: { fontStyle: "italic", fontSize: "clamp(30px, 9vw, 40px)", color: "var(--paper)", lineHeight: 1.2 } }, "your phone"),
+      e("div", { className: "display fade-up", style: { fontStyle: "italic", fontSize: "clamp(30px, 9vw, 40px)", color: "var(--paper)", lineHeight: 1.2, animationDelay: "500ms" } }, "has fought in"),
+      e("div", { className: "display fade-up", style: { fontStyle: "italic", fontSize: "clamp(40px, 13vw, 56px)", color: "var(--burgundy)", lineHeight: 1.1, animationDelay: "1100ms", marginTop: 6 } }, "several wars."),
+      e("div", { className: "mono fade-in", style: { fontSize: 10, letterSpacing: "0.4em", marginTop: 30, color: "var(--gold-soft)", opacity: 0.7, animationDelay: "1700ms" } }, "· battery health: 10% ·")
+    )
+  );
+}
+
+function RevealBuild() {
+  return e(SceneShell, { bg: "#06050a" },
+    e(SafeContent, { style: { alignItems: "center", textAlign: "center" } },
+      e("div", { className: "eyebrow fade-in", style: { color: "var(--gold-soft)" } }, "introducing"),
+      e("div", { className: "display fade-up", style: { fontStyle: "italic", fontSize: "clamp(36px, 10vw, 46px)", color: "var(--paper)", marginTop: 18, animationDelay: "500ms" } }, "something new"),
+      e("div", { className: "display fade-up", style: { fontStyle: "italic", fontSize: "clamp(36px, 10vw, 46px)", color: "var(--paper)", animationDelay: "900ms" } }, "for a new year.")
+    )
+  );
+}
+
+/* ============ iPHONE REVEAL ============ */
+function IPhoneReveal(props) {
+  var winnerCase = props.winnerCase;
+  return e(SceneShell, { bg: "#0c0a08" },
+    e("div", { style: { position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 45%, #1a161244 0%, #06050a 75%)" } }),
+    e("div", { style: { position: "absolute", top: "25%", left: "50%", width: "120vw", height: "120vw", maxWidth: 600, maxHeight: 600, transform: "translate(-50%, -50%)", border: "1px solid #c9a55c18", borderRadius: "50%", animation: "fade-in 1500ms 400ms both" } }),
+    e("div", { style: { position: "absolute", top: "25%", left: "50%", width: "85vw", height: "85vw", maxWidth: 440, maxHeight: 440, transform: "translate(-50%, -50%)", border: "1px solid #c9a55c28", borderRadius: "50%", animation: "fade-in 1500ms 700ms both" } }),
+    e(SafeContent, { style: { alignItems: "center", textAlign: "center", gap: 0 } },
+      e("div", { className: "mono fade-in", style: { fontSize: 10, letterSpacing: "0.45em", color: "var(--gold-soft)" } }, "· FROM CUPERTINO, WITH LOVE ·"),
+      e("div", { className: "display fade-up", style: { fontStyle: "italic", fontSize: "clamp(36px, 10vw, 48px)", color: "var(--paper)", marginTop: 14, animationDelay: "300ms" } },
+        "the iPhone ", e("span", { style: { color: "var(--gold-soft)" } }, "17"), "."),
+      e("div", { className: "serif-it fade-in", style: { fontSize: 14, color: "var(--paper)", opacity: 0.7, marginTop: 6, animationDelay: "700ms" } }, "titanium · new · yours."),
+      e("div", { style: { margin: "20px auto 0", width: "min(90vw, 420px)", animation: "fade-up 1100ms 800ms both" } },
+        e("img", { src: IPHONE_HERO, style: { width: "100%", height: "auto", display: "block" } })
+      ),
+      winnerCase ? e("div", { className: "serif-it fade-up", style: { fontSize: 17, color: "var(--paper)", marginTop: 8, animationDelay: "1500ms", lineHeight: 1.35 } },
+        "paired, of course,", e("br"), "with ", e("span", { style: { color: "var(--gold-soft)" } }, winnerCase.name), ".") : null
+    )
+  );
+}
+
+/* ============ FINAL CTA ============ */
+function FinalCTA(props) {
+  return e(SceneShell, { bg: "#0c0a08" },
+    e("div", { style: { position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 60%, #1a161266 0%, #06050a 70%)" } }),
+    e(SafeContent, { style: { alignItems: "center", textAlign: "center" } },
+      e("div", { className: "eyebrow fade-in", style: { color: "var(--gold-soft)" } }, "· one last step ·"),
+      e("div", { className: "display fade-up", style: { fontStyle: "italic", fontSize: "clamp(44px, 12vw, 60px)", color: "var(--paper)", marginTop: 24, animationDelay: "400ms", lineHeight: 1 } }, "now to match"),
+      e("div", { className: "display fade-up", style: { fontSize: "clamp(36px, 10vw, 50px)", color: "var(--gold-soft)", animationDelay: "800ms", lineHeight: 1, marginTop: 4 } }, "the case with a color."),
+      e("a", { href: "https://www.apple.com/shop/buy-iphone/iphone-17", target: "_blank", rel: "noopener noreferrer", style: {
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        marginTop: 48, padding: "16px 48px", borderRadius: 99,
+        background: "var(--paper)", color: "var(--char)",
+        fontFamily: "var(--sans)", fontSize: 15, fontWeight: 600, letterSpacing: "0.04em",
+        textDecoration: "none", animation: "fade-up 900ms 1200ms both",
+        boxShadow: "0 8px 30px -8px #00000066",
+        transition: "transform 150ms ease, box-shadow 150ms ease",
+      },
+      onMouseEnter: function(ev) { ev.currentTarget.style.transform = "scale(1.04)"; ev.currentTarget.style.boxShadow = "0 12px 40px -8px #00000088"; },
+      onMouseLeave: function(ev) { ev.currentTarget.style.transform = "scale(1)"; ev.currentTarget.style.boxShadow = "0 8px 30px -8px #00000066"; },
+      }, "Choose your color")
+    )
+  );
+}
+
+/* ============ OUTRO ============ */
+function Outro() {
+  return e(SceneShell, { bg: "#06050a" },
+    e(KenBurns, { src: P.notlaPortrait, duration: 20000, brightness: 0.45, anim: "ken-pan-up" }),
+    e("div", { style: { position: "absolute", inset: 0, background: "linear-gradient(180deg, #06050a88 0%, #06050af0 100%)" } }),
+    e(SafeContent, { style: { alignItems: "center", textAlign: "center" } },
+      e("div", { className: "eyebrow fade-in", style: { color: "var(--gold-soft)" } }, "· here's to 29 ·"),
+      e("div", { className: "display fade-up", style: { fontStyle: "italic", fontSize: "clamp(42px, 12vw, 56px)", color: "var(--paper)", marginTop: 22, animationDelay: "400ms", lineHeight: 1.05 } }, "happy", e("br"), "birthday,"),
+      e("div", { className: "display fade-up", style: { fontSize: "clamp(60px, 18vw, 84px)", color: "var(--gold-soft)", marginTop: 8, animationDelay: "1000ms" } }, "Des."),
+      e("div", { className: "serif-it fade-up", style: { fontSize: "clamp(15px, 4.2vw, 18px)", color: "var(--paper)", opacity: 0.85, marginTop: 28, animationDelay: "1500ms", lineHeight: 1.5, maxWidth: 320 } },
+        "You are the love of my life and you're looking a lot like my future wife. I can't wait for us to keep sharing our years together. Here's to twenty-nine, baby."),
+      e("div", { className: "mono fade-in", style: { fontSize: 10, letterSpacing: "0.45em", color: "var(--gold-soft)", marginTop: 36, opacity: 0.7, animationDelay: "2200ms" } }, "·  forever yours, hunter  ·")
+    )
+  );
+}
+
+/* ============ GAME: INTRO ============ */
+function GameIntro() {
+  return e(SceneShell, { bg: "var(--cream-warm)", dark: true },
+    e("div", { style: { position: "absolute", inset: 0, background: "radial-gradient(ellipse at 80% 90%, #5a162218 0%, transparent 55%)" } }),
+    e(SafeContent, { style: { alignItems: "center", textAlign: "center" } },
+      e("div", { className: "mono fade-in", style: { fontSize: 11, letterSpacing: "0.4em", color: "var(--burgundy)" } }, "· TIME FOR YOUR GIFT ·"),
+      e("div", { className: "display fade-up", style: { fontStyle: "italic", fontSize: "clamp(42px, 12vw, 54px)", color: "var(--char)", marginTop: 28, lineHeight: 1.0, animationDelay: "300ms" } }, "The Cat Case"),
+      e("div", { className: "display fade-up", style: { fontSize: "clamp(36px, 10vw, 46px)", color: "var(--char)", marginTop: 10, lineHeight: 1.0, animationDelay: "600ms", letterSpacing: "0.01em" } }, "Dating Game"),
+      e("div", { className: "serif-it fade-up", style: { fontSize: 17, marginTop: 32, lineHeight: 1.35, opacity: 0.65, color: "var(--char)", animationDelay: "1100ms" } }, "eight contestants.", e("br"), "one purrfect match."),
+      e("div", { style: { marginTop: 36, animation: "fade-in 800ms 1500ms both", textAlign: "center" } },
+        e("div", { className: "mono", style: { fontSize: 10, letterSpacing: "0.4em", color: "var(--burgundy)", opacity: 0.7 } }, "THIS OR THAT"),
+        e("div", { className: "mono", style: { fontSize: 11, letterSpacing: "0.4em", color: "var(--burgundy)", fontWeight: 700, marginTop: 6 } }, "TAP TO CONTINUE")
+      )
+    )
+  );
+}
+
+/* ============ GAME: THIS OR THAT ============ */
+function ThisOrThat(props) {
+  var caseA = props.caseA, caseB = props.caseB, matchLabel = props.matchLabel, onChoose = props.onChoose;
+  var ref = useState(null), chosen = ref[0], setChosen = ref[1];
+
+  var pick = function(winner) {
+    if (chosen) return;
+    setChosen(winner.id);
+    setTimeout(function() { onChoose(winner); }, 700);
+  };
+
+  return e(SceneShell, { bg: "var(--cream-warm)", dark: true },
+    e(SafeContent, { style: { gap: 0, padding: "calc(var(--sat,0px) + 48px) 20px calc(var(--sab,0px) + 28px)", alignItems: "center" } },
+      e("div", { style: { textAlign: "center", marginBottom: 12 } },
+        e("div", { className: "mono", style: { fontSize: 10, letterSpacing: "0.45em", color: "var(--burgundy)", opacity: 0.8 } }, matchLabel)
+      ),
+      e("div", { style: { flex: 1, display: "flex", flexDirection: "row", gap: 12, minHeight: 0, alignItems: "center", justifyContent: "center", width: "100%" } },
+        [caseA, caseB].map(function(c, i) {
+          var isChosen = chosen === c.id;
+          var isRejected = chosen && !isChosen;
+          return e("div", { key: c.id, style: {
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
+            flex: 1, cursor: "pointer", transition: "all 600ms cubic-bezier(.2,.7,.2,1)",
+            opacity: isRejected ? 0.3 : 1,
+            transform: isChosen ? "scale(1.03)" : isRejected ? "scale(0.95)" : "scale(1)",
+          }, onClick: function() { pick(c); } },
+            e("div", { style: {
+              position: "relative", width: "100%", aspectRatio: "2/3",
+              borderRadius: 18, overflow: "hidden",
+              boxShadow: isChosen ? "0 20px 50px -10px #00000066" : "0 8px 24px -8px #00000044",
+            } },
+              e("img", { src: c.img, style: { width: "100%", height: "100%", objectFit: "cover", display: "block" } }),
+              isChosen ? e("div", { style: { position: "absolute", top: 10, right: 10, width: 30, height: 30, borderRadius: "50%", background: "#27ae60", display: "grid", placeItems: "center", animation: "fade-in 300ms ease both", boxShadow: "0 4px 12px #00000033" } },
+                e("svg", { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none" },
+                  e("path", { d: "M5 12l5 5L19 7", stroke: "#fff", strokeWidth: 2.5, strokeLinecap: "round", strokeLinejoin: "round" })
+                )
+              ) : null
+            ),
+            e("div", { style: { textAlign: "center" } },
+              e("div", { className: "display", style: { fontStyle: "italic", fontSize: "clamp(13px, 3.5vw, 17px)", color: "var(--char)", lineHeight: 1.15 } }, c.name),
+              e("div", { className: "mono", style: { fontSize: 9, letterSpacing: "0.2em", color: "var(--burgundy)", opacity: 0.7, marginTop: 2 } }, i === 0 ? "THIS" : "THAT")
+            )
+          );
+        })
+      ),
+      !chosen ? e("div", { style: { textAlign: "center", marginTop: 10 } },
+        e("div", { className: "mono", style: { fontSize: 9, letterSpacing: "0.35em", color: "var(--char)", opacity: 0.4 } }, "tap your pick")
+      ) : null
+    )
+  );
+}
+
+/* ============ GAME: TOURNAMENT ============ */
+function Tournament(props) {
+  var onComplete = props.onComplete;
+  var ref1 = useState(0), roundIdx = ref1[0], setRoundIdx = ref1[1];
+  var ref2 = useState([]), winners = ref2[0], setWinners = ref2[1];
+  var ref3 = useState(false), transitioning = ref3[0], setTransitioning = ref3[1];
+
+  var getMatchup = function() {
+    var match = BRACKET[roundIdx];
+    if (!match) return null;
+    if (match.round === "quarter-final") {
+      return { matchLabel: match.matchLabel, caseA: CASES[match.a], caseB: CASES[match.b] };
+    }
+    if (match.round === "semi-final") {
+      /* Semi-finals use quarter-final winners: semi1 = qf winners 0 vs 1, semi2 = qf winners 2 vs 3 */
+      var semiIdx = roundIdx - 4;
+      return { matchLabel: match.matchLabel, caseA: winners[semiIdx * 2], caseB: winners[semiIdx * 2 + 1] };
+    }
+    /* Final: semi-final winners (index 4 and 5 in winners array) */
+    return { matchLabel: match.matchLabel, caseA: winners[4], caseB: winners[5] };
+  };
+
+  var handleChoice = function(winner) {
+    var newWinners = winners.concat([winner]);
+    setWinners(newWinners);
+    if (roundIdx >= BRACKET.length - 1) {
+      setTimeout(function() { onComplete(winner); }, 400);
+      return;
+    }
+    setTransitioning(true);
+    setTimeout(function() {
+      setRoundIdx(function(r) { return r + 1; });
+      setTransitioning(false);
+    }, 400);
+  };
+
+  var matchup = getMatchup();
+  if (!matchup) return null;
+
+  return e("div", { style: { position: "absolute", inset: 0, opacity: transitioning ? 0 : 1, transition: "opacity 350ms ease" } },
+    e(ThisOrThat, { key: roundIdx, caseA: matchup.caseA, caseB: matchup.caseB, matchLabel: matchup.matchLabel, onChoose: handleChoice })
+  );
+}
+
+/* ============ GAME: WINNER ============ */
+function GameWinner(props) {
+  var c = props.winner || CASES[0];
+  var onCTA = props.onCTA;
+  return e(SceneShell, { bg: "var(--burgundy)" },
+    e("div", { style: { position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 30%, #7a223088 0%, transparent 60%)" } }),
+    e(SafeContent, { style: { alignItems: "center", textAlign: "center", gap: 0 } },
+      e("div", { className: "mono fade-in", style: { fontSize: 10, letterSpacing: "0.45em", color: "var(--gold-soft)" } }, "· IT'S A MATCH ·"),
+      e("div", { className: "display fade-up", style: { fontStyle: "italic", fontSize: "clamp(48px, 14vw, 68px)", color: "var(--paper)", marginTop: 16, animationDelay: "300ms" } }, "oh ya..."),
+      e("div", { style: { margin: "24px auto 0", width: "min(55vw, 220px)", aspectRatio: "2/3", borderRadius: 18, overflow: "hidden", boxShadow: "0 30px 60px -10px #00000088", animation: "fade-up 900ms 600ms both" } },
+        e("img", { src: c.img, style: { width: "100%", height: "100%", objectFit: "cover", display: "block" } })
+      ),
+      e("div", { className: "display fade-up", style: { fontStyle: "italic", fontSize: "clamp(22px, 6vw, 28px)", color: "var(--paper)", marginTop: 16, animationDelay: "1200ms" } }, c.name),
+      e("div", { className: "mono fade-in", style: { fontSize: 10, letterSpacing: "0.3em", marginTop: 8, color: "var(--gold-soft)", opacity: 0.8, animationDelay: "1600ms" } }, "· YOUR CHAMPION ·"),
+      e("div", { style: { marginTop: 28, animation: "fade-up 800ms 2000ms both", cursor: "pointer" }, onClick: function(ev) { ev.stopPropagation(); onCTA(); } },
+        e("div", { style: { padding: "14px 36px", border: "1px solid var(--gold-soft)", borderRadius: 40, background: "transparent", transition: "background 300ms" } },
+          e("span", { className: "mono", style: { fontSize: 11, letterSpacing: "0.3em", color: "var(--gold-soft)" } }, "oh ya WHAT??")
+        )
+      )
+    )
+  );
+}
+
+/* ============ SCENE SCRIPT ============ */
+function buildScenes(opts) {
+  var chosenCase = opts.chosenCase, onChooseCase = opts.onChooseCase, eggs = opts.eggs;
+  return [
+    /* 0 — COVER */
+    { chapter: "cover", auto: 0, render: function() { return e(Cover); } },
+
+    /* 1-7 — ORIGIN */
+    { chapter: "origin", auto: 4200, render: function() { return e(DateScene); } },
+    { chapter: "origin", auto: 4800, render: function() { return e(MetScene); } },
+    { chapter: "origin", auto: 4600, render: function() { return e(ChildhoodCard, { top: "· chapter · i ·", src: P.kidPortrait, body: "a small girl with\nextremely large opinions.", year: "circa late 90's" }); } },
+    { chapter: "origin", auto: 4600, render: function() { return e(ChildhoodCard, { top: "· first born ·", src: P.kidWithMom, body: "first main character\nmoment: being first.", year: "hanford '05" }); } },
+    { chapter: "origin", auto: 4600, render: function() { return e(ChildhoodCard, { top: "· school portrait ·", src: P.kidBackpack, body: "the year she figured out\nthe camera was on her side." }); } },
+    { chapter: "origin", auto: 4000, render: function() { return e(YearsLater); } },
+
+    /* 8 — Glam reveal */
+    { chapter: "origin", auto: 5000, render: function() { return e(GlamReveal); } },
+
+    /* 9-16 — WRAPPED stats */
+    { chapter: "wrapped", auto: 3800, render: function() { return e(WrappedTitle); } },
+    { chapter: "wrapped", auto: 0, render: function() {
+      return e(StatCard, { label: "· cities visited ·", number: "16", sub: "napa. kansas city. des moines. nyc. cabo. fresno. hanford. denver. atlanta. austin. portland. los angeles. pismo. hawaii. san diego. and next — vegas.", bg: "var(--burgundy)", accent: "var(--gold-soft)", easterEgg: eggs ? "main · character · energy" : null });
+    }},
+    { chapter: "wrapped", auto: 0, render: function() {
+      return e(TravelCard, { place: "New York,\nNew York.", month: "JUL · AUG", photo: P.nycCouple, caption: "three cocktails deep on a boat. moon up. empire blinking." });
+    }},
+    { chapter: "wrapped", auto: 0, render: function() {
+      return e(TravelCard, { place: "Cabo.", month: "AUG", photo: P.caboDes, caption: "aperol in one hand. champagne in the other. balance." });
+    }},
+    { chapter: "wrapped", auto: 0, render: function() {
+      return e(TravelCard, { place: "Hawai'i.", month: "FEB · MAR", photo: P.hawaiiTurtle, caption: "made eye contact with a sea turtle." });
+    }},
+    { chapter: "wrapped", auto: 0, render: function() {
+      return e(TravelCard, { place: "Napa.", month: "JUN · MAY", photo: P.napaCouple, caption: "a literal castle. a glass of red. a perfect weekend." });
+    }},
+    { chapter: "wrapped", auto: 0, render: function() {
+      return e(TravelCard, { place: "Kansas City.", month: "JUL", photo: P.kcGoblin, caption: "with a boyfriend that's fully burnt & turnt." });
+    }},
+    { chapter: "wrapped", auto: 0, render: function() {
+      return e(TravelCard, { place: "Pismo.", month: "MAY", photo: P.pismoCouple, caption: "sand in our toes. clouds in our faces." });
+    }},
+    { chapter: "wrapped", auto: 0, render: function() {
+      return e(FullBleedPhoto, { photo: P.sfDhalion, top: "· extras: SF after dark ·", headline: "made a new sister.\nbackup to annoy hunter.", signoff: eggs ? "· remember celebrating hunter? ·" : null });
+    }},
+    { chapter: "wrapped", auto: 0, render: function() {
+      return e(StatCard, { label: "· apartments survived ·", number: "2", sub: "marina. then soma. she said yes both times.", bg: "#1a1612", accent: "var(--gold-soft)", photo: P.garageSmoke, easterEgg: eggs ? "· moved in. moved on from los palmos ·" : null });
+    }},
+    { chapter: "wrapped", auto: 0, render: function() {
+      return e(StatCard, { label: "· pets acquired ·", number: "2", suffix: "(0 planned)", sub: "one cat. one dog. some regrets.", bg: "var(--cream)", fg: "var(--char)", accent: "var(--burgundy)", photo: P.eloiseCollar, easterEgg: eggs ? "we · accidentally · became · parents" : null });
+    }},
+    { chapter: "wrapped", auto: 0, render: function() {
+      return e(EditorialSpread, { kicker: "· EXHIBIT A · THE CAT ·", headline: "Eloise\nMcPherson.", body: "Found us in the shape of a tiny grey question mark. Now runs the household.", photo: P.eloiseBasket, signoff: "· the devil walked so she could run ·" });
+    }},
+    { chapter: "wrapped", auto: 0, render: function() {
+      return e(EditorialSpread, { kicker: "· EXHIBIT B · THE DOG ·", headline: "Loki, son\nof Desiree.", body: "Our in-house side-eye specialist. 45 lbs of fluff, 100% a mama's boy.", photo: P.lokiDes, signoff: "· dazed and confused - poor guy ·" });
+    }},
+    { chapter: "wrapped", auto: 0, render: function() {
+      return e(StatCard, { label: "· cocktails ordered ·", number: "247", suffix: "& counting", sub: "aperol top of the leaderboard. bubbles and mimosas in close pursuit.", bg: "var(--wine)", accent: "var(--gold-soft)", photo: P.nycCocktail, easterEgg: eggs ? "· sunglasses indoors · always ·" : null });
+    }},
+    { chapter: "wrapped", auto: 0, render: function() {
+      return e(StatCard, { label: "· emotional support pastries ·", number: "89", sub: "baked goods. some were eaten horizontally.", bg: "#3a0d17", accent: "var(--gold-soft)", easterEgg: eggs ? "· zero regrets here ·" : null });
+    }},
+    { chapter: "wrapped", auto: 0, render: function() {
+      return e(SceneShell, { bg: "#ebdfc6", dark: true },
+        e(SafeContent, { style: { gap: 0, alignItems: "center", textAlign: "center" } },
+          e("div", { className: "display fade-up", style: { fontSize: "clamp(34px, 10vw, 44px)", fontWeight: 500, color: "var(--char)", lineHeight: 1.0, marginTop: 8 } },
+            e("div", null, "Croissant,"), e("div", null, "critter.")
+          ),
+          e("div", { style: { margin: "24px auto", width: "min(75vw, 280px)", aspectRatio: "4/3", position: "relative" } },
+            e("div", { style: { width: "100%", height: "100%", background: "var(--paper)", padding: "10px 10px 32px", boxShadow: "0 20px 40px -12px #00000044", transform: "rotate(-1.5deg)", animation: "fade-in 900ms 500ms both", position: "relative" } },
+              e("img", { src: P.croissantBed, style: { width: "100%", height: "100%", objectFit: "cover", display: "block" } }),
+              e("div", { style: {
+                position: "absolute", top: "50%", left: "50%",
+                transform: "translate(-50%, -50%) rotate(-18deg) scale(0)",
+                animation: "stamp-in 400ms 1200ms cubic-bezier(.2,1.5,.4,1) forwards",
+                padding: "10px 24px", border: "4px solid #c0392b", borderRadius: 8,
+                color: "#c0392b", fontFamily: "var(--sans)", fontWeight: 700,
+                fontSize: "clamp(28px, 8vw, 38px)", letterSpacing: "0.15em",
+                textTransform: "uppercase", opacity: 0.85,
+                textShadow: "0 2px 8px #00000022",
+                background: "rgba(255,255,255,0.15)",
+              } }, "GREEDY")
+            )
+          ),
+          e("div", { className: "mono fade-in", style: { fontSize: 10, letterSpacing: "0.4em", color: "var(--burgundy)", marginTop: 14, animationDelay: "1300ms", opacity: 0.85 } }, "· filed under: pastry crimes ·")
+        )
+      );
+    }},
+    { chapter: "wrapped", auto: 0, render: function() {
+      return e(StatCard, { label: "· main character moments ·", number: "∞", sub: "off the chart. literally. we tried to chart it.", bg: "#0c0a08", accent: "var(--gold-soft)", photo: P.eyesSelfie, easterEgg: eggs ? "· too many great moments to capture ·" : null });
+    }},
+
+    /* GOBLIN HOUR */
+    { chapter: "chaos", auto: 0, render: function() {
+      return e(SceneShell, { bg: "#efe6d5", dark: true },
+        e(SafeContent, { style: { gap: 0, alignItems: "center", textAlign: "center" } },
+          e("div", { className: "display fade-up", style: { fontSize: "clamp(34px, 10vw, 44px)", fontWeight: 500, color: "var(--char)", lineHeight: 1.0, marginTop: 8 } },
+            e("div", null, "The Goblin"), e("div", null, "Hour.")
+          ),
+          e("div", { style: { display: "flex", gap: 8, margin: "20px auto 0", width: "min(90vw, 340px)", animation: "fade-in 900ms 500ms both" } },
+            e("div", { style: { flex: 1, aspectRatio: "3/4", background: "var(--paper)", padding: "6px 6px 20px", boxShadow: "0 12px 30px -8px #00000044", transform: "rotate(-2deg)" } },
+              e("img", { src: P.couchChaos, style: { width: "100%", height: "100%", objectFit: "cover", display: "block" } })
+            ),
+            e("div", { style: { flex: 1, aspectRatio: "3/4", background: "var(--paper)", padding: "6px 6px 20px", boxShadow: "0 12px 30px -8px #00000044", transform: "rotate(1.5deg)", marginTop: 12 } },
+              e("img", { src: P.desGoblin, style: { width: "100%", height: "100%", objectFit: "cover", display: "block" } })
+            ),
+            e("div", { style: { flex: 1, aspectRatio: "3/4", background: "var(--paper)", padding: "6px 6px 20px", boxShadow: "0 12px 30px -8px #00000044", transform: "rotate(-1deg)", marginTop: -6 } },
+              e("img", { src: P.desNyc, style: { width: "100%", height: "100%", objectFit: "cover", display: "block" } })
+            )
+          ),
+          e("div", { className: "serif-it fade-up", style: { fontSize: "clamp(14px, 4vw, 17px)", color: "var(--char)", lineHeight: 1.35, opacity: 0.9, marginTop: 20, animationDelay: "900ms" } }, "Documented daily between 9 and 11pm. Subjects: one cat, one dog, one girl, one plush mallard."),
+          e("div", { className: "mono fade-in", style: { fontSize: 10, letterSpacing: "0.4em", color: "var(--burgundy)", marginTop: 18, animationDelay: "1300ms", opacity: 0.85 } }, "· she's just a girl ·")
+        )
+      );
+    }},
+
+    /* CAT CASE GAME */
+    { chapter: "game", auto: 0, render: function() { return e(GameIntro); } },
+    { chapter: "game", auto: 0, noTapNav: true, render: function(ctx) {
+      return e(Tournament, { onComplete: function(winner) { onChooseCase(winner); ctx.advance(); } });
+    }},
+    { chapter: "game", auto: 0, noTapNav: true, render: function(ctx) {
+      return e(GameWinner, { winner: chosenCase, onCTA: function() { ctx.advance(); } });
+    }},
+
+    /* 36-41 — THE REVEAL */
+    { chapter: "reveal", auto: 4000, render: function() { return e(ProblemScene); } },
+    { chapter: "reveal", auto: 4500, render: function() { return e(WarsScene); } },
+    { chapter: "reveal", auto: 4200, render: function() { return e(RevealBuild); } },
+    { chapter: "reveal", auto: 0, render: function() { return e(IPhoneReveal, { winnerCase: chosenCase }); } },
+    { chapter: "reveal", auto: 0, render: function() { return e(Outro); } },
+    { chapter: "reveal", auto: 0, noTapNav: true, render: function() { return e(FinalCTA, { winnerCase: chosenCase }); } },
+  ];
+}
+
+/* ============ PROGRESS BAR ============ */
+function ProgressBar(props) {
+  var chapters = props.chapters, idx = props.idx, scenes = props.scenes, dark = props.dark;
+  return e("div", { className: "progress", style: { color: dark ? "var(--char)" : "var(--ink)" } },
+    chapters.map(function(c) {
+      var sceneIndices = scenes.map(function(s, si) { return s.chapter === c.id ? si : -1; }).filter(function(x) { return x >= 0; });
+      if (!sceneIndices.length) return null;
+      var minI = sceneIndices[0], maxI = sceneIndices[sceneIndices.length - 1];
+      var state = "pending";
+      if (idx > maxI) state = "done";
+      else if (idx >= minI) state = "active";
+
+      var fillStyle = {};
+      if (state === "active") {
+        var pct = ((idx - minI + 1) / sceneIndices.length) * 100;
+        fillStyle = { width: pct + "%", transition: "width 500ms cubic-bezier(.4,.7,.3,1)" };
+      }
+      return e("div", { key: c.id, className: "tick" + (dark ? " dark" : "") },
+        e("i", { style: state === "done" ? { width: "100%" } : state === "active" ? fillStyle : { width: "0%" } })
+      );
+    })
+  );
+}
+
+/* ============ APP ============ */
+function App() {
+  var ref1 = useState(0), idx = ref1[0], setIdx = ref1[1];
+  var ref2 = useState(null), chosenCase = ref2[0], setChosenCase = ref2[1];
+  var advanceRef = useRef(null);
+
+  var onChooseCase = useCallback(function(c) { setChosenCase(c); }, []);
+
+  var scenes = useMemo(function() {
+    return buildScenes({
+      chosenCase: chosenCase || CASES[0],
+      onChooseCase: onChooseCase,
+      eggs: true,
+    });
+  }, [chosenCase, onChooseCase]);
+
+  var advance = useCallback(function() { setIdx(function(i) { return Math.min(i + 1, scenes.length - 1); }); }, [scenes.length]);
+  var back = useCallback(function() { setIdx(function(i) { return Math.max(0, i - 1); }); }, []);
+  advanceRef.current = advance;
+
+  /* Auto-advance */
+  useEffect(function() {
+    var s = scenes[idx];
+    if (!s || !s.auto || s.auto <= 0) return;
+    var id = setTimeout(function() { advanceRef.current && advanceRef.current(); }, s.auto);
+    return function() { clearTimeout(id); };
+  }, [idx, scenes]);
+
+  /* Keyboard */
+  useEffect(function() {
+    var onKey = function(ev) {
+      if (ev.key === "ArrowRight" || ev.key === " ") { advance(); ev.preventDefault(); }
+      else if (ev.key === "ArrowLeft") { back(); ev.preventDefault(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return function() { window.removeEventListener("keydown", onKey); };
+  }, [advance, back]);
+
+  var currentScene = scenes[idx];
+  var currentChapter = currentScene && currentScene.chapter;
+  var lightBgChapters = ["chaos", "game"];
+  var isDarkText = lightBgChapters.indexOf(currentChapter) >= 0;
+
+  return e(Fragment, null,
+    e(ProgressBar, { chapters: CHAPTERS, idx: idx, scenes: scenes, dark: isDarkText }),
+    e("div", { style: { position: "absolute", inset: 0 } },
+      e("div", { key: idx, style: { position: "absolute", inset: 0 } },
+        currentScene && currentScene.render({ advance: advance, back: back })
+      )
+    ),
+    !currentScene || !currentScene.noTapNav ? e(Fragment, null,
+      e("div", { className: "tap-zone left", onClick: back }),
+      e("div", { className: "tap-zone right", onClick: advance })
+    ) : null
+  );
+}
+
+/* ============ Mount ============ */
+var appRoot = document.getElementById("root");
+var reactRoot = ReactDOM.createRoot(appRoot);
+reactRoot.render(e(App));
+
+/* ============ Splash dismiss ============ */
+setTimeout(function() {
+  var s = document.getElementById("splash");
+  if (s) { s.classList.add("gone"); setTimeout(function() { s.style.display = "none"; }, 900); }
+}, 1200);
+
+/* ============ Background Music ============ */
+(function() {
+  var audio = document.getElementById("bgmusic");
+  var btn = document.getElementById("audio-toggle");
+  var iconOn = document.getElementById("audio-icon-on");
+  var iconOff = document.getElementById("audio-icon-off");
+  var started = false;
+
+  audio.volume = 0.4;
+
+  function fadeIn() {
+    audio.volume = 0;
+    audio.play().then(function() {
+      started = true;
+      btn.style.display = "grid";
+      var vol = 0;
+      var fade = setInterval(function() {
+        vol = Math.min(vol + 0.02, 0.4);
+        audio.volume = vol;
+        if (vol >= 0.4) clearInterval(fade);
+      }, 50);
+    }).catch(function() {});
+  }
+
+  /* Start music on first user interaction */
+  function startOnce() {
+    if (started) return;
+    fadeIn();
+    document.removeEventListener("click", startOnce);
+    document.removeEventListener("touchstart", startOnce);
+    document.removeEventListener("keydown", startOnce);
+  }
+  document.addEventListener("click", startOnce);
+  document.addEventListener("touchstart", startOnce);
+  document.addEventListener("keydown", startOnce);
+
+  /* Mute toggle */
+  btn.addEventListener("click", function(ev) {
+    ev.stopPropagation();
+    if (audio.muted) {
+      audio.muted = false;
+      iconOn.style.display = "";
+      iconOff.style.display = "none";
+    } else {
+      audio.muted = true;
+      iconOn.style.display = "none";
+      iconOff.style.display = "";
+    }
+  });
+})();
+  </script>
+</body>
+</html>
